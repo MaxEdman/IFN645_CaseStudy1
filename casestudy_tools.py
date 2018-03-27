@@ -53,3 +53,64 @@ def visualize_decision_tree(dm_model, feature_names, save_name):
     export_graphviz(dm_model, out_file=dotfile, feature_names=feature_names)
     graph = pydot.graph_from_dot_data(dotfile.getvalue())
     graph.write_png(save_name) # saved in the following file
+    
+    
+def get_decision_tree():  
+    # Gets the preprocessed data set for Organics.
+    df = preprocess()
+    
+    # Import necssary packages
+    from sklearn.model_selection import train_test_split
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.model_selection import GridSearchCV
+    from sklearn.metrics import classification_report, accuracy_score
+
+    # Sets target column to ORGYN
+    target_dataset = df['ORGYN']
+    # Removes ORGYN from the dataset in order to avoid false predictor.
+    dataset = df.drop(['ORGYN'], axis=1)
+
+    # Sets random state to 10. This will be kept consistently throughout the case study.
+    random_state = 10
+    # Sets the test size to be 30% of the total data set.
+    test_size = 0.3
+
+    # Transform the dataset into a matrix.
+    dataset_matrix = dataset.as_matrix()
+
+    # Splits the data into train and test sets.
+    dataset_train, dataset_test, target_dataset_train, target_dataset_test = train_test_split(dataset_matrix,
+                                                                                              target_dataset,
+                                                                                              test_size=test_size,
+                                                                                              stratify=target_dataset,
+                                                                                              random_state=random_state
+                                                                                             )
+    
+    # GridSearchCV parameters
+    params = {'criterion': ['gini', 'entropy'],
+              'max_depth': range(2, 5),
+              'min_samples_leaf': range(1, 2)}
+
+    cross_validation_optimal_model = GridSearchCV(param_grid=params,
+                                          estimator=DecisionTreeClassifier(random_state=random_state),
+                                          cv=10)
+    cross_validation_optimal_model.fit(dataset_train, target_dataset_train)
+
+    train_accuracy_optimal_cv = cross_validation_optimal_model.score(dataset_train, target_dataset_train)
+    test_accuracy_optimal_cv = cross_validation_optimal_model.score(dataset_test, target_dataset_test)
+
+    # test the best model
+    target_prediction = cross_validation_optimal_model.predict(dataset_test)
+    
+    return cross_validation_optimal_model.best_estimator_
+
+
+
+def get_logistic_regression_model(): 
+    
+    return null
+
+def get_neural_networks_model(): 
+    
+    
+    return null
