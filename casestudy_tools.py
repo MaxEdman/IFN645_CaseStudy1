@@ -54,6 +54,45 @@ def visualize_decision_tree(dm_model, feature_names, save_name):
     graph = pydot.graph_from_dot_data(dotfile.getvalue())
     graph.write_png(save_name) # saved in the following file
     
+    return
+    
+def get_neural_networks_model(): 
+    
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import classification_report, accuracy_score
+    from sklearn.model_selection import GridSearchCV
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.neural_network import MLPClassifier
+
+    rs = 10
+    
+     # Gets the preprocessed data set for Organics.
+    df = preprocess()
+
+    y = df['ORGYN']
+    X = df.drop(['ORGYN'], axis=1)
+    X_mat = X.as_matrix()
+    X_train, X_test, y_train, y_test = train_test_split(X_mat, y, test_size=0.3, stratify=y, random_state=rs)
+
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train, y_train)
+    X_test = scaler.transform(X_test)
+    
+    params = {'hidden_layer_sizes': [(3)], 'alpha': [0.0001]}
+
+    cv = GridSearchCV(param_grid=params, estimator=MLPClassifier(random_state=rs), cv=10, n_jobs=-1)
+    cv.fit(X_train, y_train)
+
+    y_pred = cv.predict(X_test)
+    
+    print("Train accuracy:", cv.score(X_train, y_train))
+    print("Test accuracy:", cv.score(X_test, y_test))
+
+    y_pred = cv.predict(X_test)
+    print(classification_report(y_test, y_pred))
+
+    return cv.best_estimator_
+    
     
 def get_decision_tree():  
     # Gets the preprocessed data set for Organics.
@@ -64,6 +103,7 @@ def get_decision_tree():
     from sklearn.tree import DecisionTreeClassifier
     from sklearn.model_selection import GridSearchCV
     from sklearn.metrics import classification_report, accuracy_score
+    from sklearn.preprocessing import StandardScaler
 
     # Sets target column to ORGYN
     target_dataset = df['ORGYN']
@@ -102,6 +142,18 @@ def get_decision_tree():
     # test the best model
     target_prediction = cross_validation_optimal_model.predict(dataset_test)
     
+        # Prints train and test accuracy.
+    print("Default Decision Tree Statistics:")
+    print("Train Accuracy:", cross_validation_optimal_model.score(dataset_train, target_dataset_train))
+    print("Test Accuracy:", cross_validation_optimal_model.score(dataset_test, target_dataset_test))
+
+    # Printing a classification report of the model.
+    print("")
+    print("Classification Report:")
+    target_predict = cross_validation_optimal_model.predict(dataset_test)
+    print(classification_report(target_dataset_test, target_predict))
+    print("Number of nodes in the decision tree:", cross_validation_optimal_model.best_estimator_.tree_.node_count)
+    
     return cross_validation_optimal_model.best_estimator_
 
 
@@ -110,7 +162,3 @@ def get_logistic_regression_model():
     
     return null
 
-def get_neural_networks_model(): 
-    
-    
-    return null
