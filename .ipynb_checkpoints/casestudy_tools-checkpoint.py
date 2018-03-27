@@ -212,6 +212,7 @@ def get_decision_tree_david_special():
     df = preprocess_david()
     
     df = df.drop(['BILL', 'LTIME', 'REGION_Midlands', 'REGION_Scottish', 'REGION_South East', 'REGION_South West'], axis = 1)
+    print(df.info())
     
     # Import necssary packages
     from sklearn.model_selection import train_test_split
