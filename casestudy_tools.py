@@ -390,3 +390,18 @@ def visualise_all_models():
     visualize_decision_tree(get_decision_tree(), dataset.columns, "Decision Tree Model - Task 2.png")
     visualize_decision_tree(get_logistic_regression_model(), dataset.columns, "Logistic Regression Model - Task 3.png")
     visualize_decision_tree(get_neural_networks_model(), dataset.columns, "Neural Network Model - Task 4.png")
+    
+def analyse_feature_importance(dm_model, feature_names, n_to_display=20):
+    import numpy as np
+    # grab feature importances from the model
+    importances = dm_model.feature_importances_
+    
+    # sort them out in descending order
+    indices = np.argsort(importances)
+    indices = np.flip(indices, axis=0)
+
+    # limit to 20 features, you can leave this out to print out everything
+    indices = indices[:n_to_display]
+
+    for i in indices:
+        print(feature_names[i], ':', importances[i])
