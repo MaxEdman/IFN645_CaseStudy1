@@ -1,3 +1,5 @@
+
+
 def preprocess():
     # Import pandas
     import pandas as pd
@@ -130,6 +132,14 @@ def get_neural_networks_model():
     X_train = scaler.fit_transform(X_train, y_train)
     X_test = scaler.transform(X_test)
     
+    # Updates the global variables with the test and train data
+    nn_x_train = X_train
+    nn_x_test = X_test
+    nn_y_train = y_train
+    nn_y_test = y_test
+    
+    
+    
     params = {'hidden_layer_sizes': [(3)], 'alpha': [0.0001]}
 
     cv = GridSearchCV(param_grid=params, estimator=MLPClassifier(random_state=rs), cv=10, n_jobs=-1)
@@ -139,6 +149,11 @@ def get_neural_networks_model():
     print("Neural Network Model Statistics:")
     print("Train accuracy:", cv.score(X_train, y_train))
     print("Test accuracy:", cv.score(X_test, y_test))
+    
+    nn_x_train = X_train
+    nn_x_test  = X_test
+    nn_y_train = y_train
+    nn_y_test  = y_test
 
     y_pred = cv.predict(X_test)
     print("Classification Report:")
@@ -172,12 +187,14 @@ def get_decision_tree():
     dataset_matrix = dataset.as_matrix()
 
     # Splits the data into train and test sets.
-    dataset_train, dataset_test, target_dataset_train, target_dataset_test = train_test_split(dataset_matrix,
-                                                                                              target_dataset,
-                                                                                              test_size=test_size,
-                                                                                              stratify=target_dataset,
-                                                                                              random_state=random_state
-                                                                                             )
+    dataset_train, dataset_test, target_dataset_train, target_dataset_test = train_test_split(dataset_matrix, target_dataset, test_size=test_size, stratify=target_dataset, random_state=random_state)
+
+    # Updates the global variables with the test and train data
+    dt_x_train = dataset_train
+    dt_x_test = dataset_test
+    dt_y_train = target_dataset_train
+    dt_y_test = target_dataset_test
+    
     
     # GridSearchCV parameters
     params = {'criterion': ['gini', 'entropy'],
@@ -365,6 +382,11 @@ def get_logistic_regression_model():
     print("Logistic Regression Model Statistics:")
     print("Train accuracy:", cv.score(X_train_sel_model, y_train_log))
     print("Test accuracy:", cv.score(X_test_sel_model, y_test_log))
+    
+    log_reg_x_train = X_train_sel_model
+    log_reg_x_test  = X_test_sel_model
+    log_reg_y_train = y_train_log
+    log_reg_y_test  = y_test_log
 
     # test the best model
     y_pred = cv.predict(X_test_sel_model)

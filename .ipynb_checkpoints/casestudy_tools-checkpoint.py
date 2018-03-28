@@ -1,3 +1,5 @@
+
+
 def preprocess():
     # Import pandas
     import pandas as pd
@@ -130,6 +132,14 @@ def get_neural_networks_model():
     X_train = scaler.fit_transform(X_train, y_train)
     X_test = scaler.transform(X_test)
     
+    # Updates the global variables with the test and train data
+    nn_x_train = X_train
+    nn_x_test = X_test
+    nn_y_train = y_train
+    nn_y_test = y_test
+    
+    
+    
     params = {'hidden_layer_sizes': [(3)], 'alpha': [0.0001]}
 
     cv = GridSearchCV(param_grid=params, estimator=MLPClassifier(random_state=rs), cv=10, n_jobs=-1)
@@ -172,12 +182,14 @@ def get_decision_tree():
     dataset_matrix = dataset.as_matrix()
 
     # Splits the data into train and test sets.
-    dataset_train, dataset_test, target_dataset_train, target_dataset_test = train_test_split(dataset_matrix,
-                                                                                              target_dataset,
-                                                                                              test_size=test_size,
-                                                                                              stratify=target_dataset,
-                                                                                              random_state=random_state
-                                                                                             )
+    dataset_train, dataset_test, target_dataset_train, target_dataset_test = train_test_split(dataset_matrix, target_dataset, test_size=test_size, stratify=target_dataset, random_state=random_state)
+
+    # Updates the global variables with the test and train data
+    dt_x_train = dataset_train
+    dt_x_test = dataset_test
+    dt_y_train = target_dataset_train
+    dt_y_test = target_dataset_test
+    
     
     # GridSearchCV parameters
     params = {'criterion': ['gini', 'entropy'],
@@ -390,3 +402,18 @@ def visualise_all_models():
     visualize_decision_tree(get_decision_tree(), dataset.columns, "Decision Tree Model - Task 2.png")
     visualize_decision_tree(get_logistic_regression_model(), dataset.columns, "Logistic Regression Model - Task 3.png")
     visualize_decision_tree(get_neural_networks_model(), dataset.columns, "Neural Network Model - Task 4.png")
+    
+def analyse_feature_importance(dm_model, feature_names, n_to_display=20):
+    import numpy as np
+    # grab feature importances from the model
+    importances = dm_model.feature_importances_
+    
+    # sort them out in descending order
+    indices = np.argsort(importances)
+    indices = np.flip(indices, axis=0)
+
+    # limit to 20 features, you can leave this out to print out everything
+    indices = indices[:n_to_display]
+
+    for i in indices:
+        print(feature_names[i], ':', importances[i])
