@@ -101,6 +101,12 @@ def visualize_decision_tree(dm_model, feature_names, save_name):
     graph.write_png(save_name) # saved in the following file
     
     return
+
+
+
+
+
+
     
 def get_neural_networks_model(): 
     
@@ -130,11 +136,12 @@ def get_neural_networks_model():
     cv.fit(X_train, y_train)
 
     y_pred = cv.predict(X_test)
-    
+    print("Neural Network Model Statistics:")
     print("Train accuracy:", cv.score(X_train, y_train))
     print("Test accuracy:", cv.score(X_test, y_test))
 
     y_pred = cv.predict(X_test)
+    print("Classification Report:")
     print(classification_report(y_test, y_pred))
 
     return cv.best_estimator_
@@ -189,7 +196,7 @@ def get_decision_tree():
     target_prediction = cross_validation_optimal_model.predict(dataset_test)
     
         # Prints train and test accuracy.
-    print("Default Decision Tree Statistics:")
+    print("CV Tuned Decision Tree Statistics:")
     print("Train Accuracy:", cross_validation_optimal_model.score(dataset_train, target_dataset_train))
     print("Test Accuracy:", cross_validation_optimal_model.score(dataset_test, target_dataset_test))
 
@@ -259,7 +266,7 @@ def get_decision_tree_david_special():
     target_prediction = cross_validation_optimal_model.predict(dataset_test)
     
         # Prints train and test accuracy.
-    print("Default Decision Tree Statistics:")
+    print("David's Special Decision Tree Statistics:")
     print("Train Accuracy:", cross_validation_optimal_model.score(dataset_train, target_dataset_train))
     print("Test Accuracy:", cross_validation_optimal_model.score(dataset_test, target_dataset_test))
 
@@ -275,5 +282,111 @@ def get_decision_tree_david_special():
 
 def get_logistic_regression_model(): 
     
-    return null
+    
+    import pandas as pd
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import classification_report, accuracy_score
+    from sklearn.model_selection import GridSearchCV
+    from casestudy_tools import preprocess
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.linear_model import LogisticRegression
+    
+    # preprocessing step
+    df = preprocess()
 
+    # random state
+    rs = 10
+    
+    # train test split
+    y = df['ORGYN']
+    X = df.drop(['ORGYN'], axis=1)
+    X_mat = X.as_matrix()
+    X_train, X_test, y_train, y_test = train_test_split(X_mat, y, test_size=0.3, stratify=y, random_state=rs)
+
+
+    # initialise a standard scaler object
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train, y_train)
+    X_test = scaler.transform(X_test)
+    
+    df_log = df.copy()
+        
+    #Create X, y and train test data partitions
+    # create X, y and train test data partitions
+    y_log = df_log['ORGYN']
+    X_log = df_log.drop(['ORGYN'], axis=1)
+    X_mat_log = X_log.as_matrix()
+    X_train_log, X_test_log, y_train_log, y_test_log = train_test_split(X_mat_log, y_log, test_size=0.3, stratify=y_log, 
+                                                                        random_state=rs)
+
+    # standardise them again
+    scaler_log = StandardScaler()
+    X_train_log = scaler_log.fit_transform(X_train_log, y_train_log)
+    X_test_log = scaler_log.transform(X_test_log)
+    
+    print("Using RFECV")
+    #Q3 Feature Transformation
+    from sklearn.feature_selection import RFECV
+    rfe = RFECV(estimator = LogisticRegression(random_state=rs), cv=10)
+    rfe.fit(X_train, y_train) # run the RFECV
+    
+    print("RFECV")
+    
+    #test the performance
+    X_train_sel = rfe.transform(X_train)
+    X_test_sel = rfe.transform(X_test)
+    
+    from sklearn.tree import DecisionTreeClassifier
+    from casestudy_tools import get_decision_tree
+    #from casestudy_tools import analyse_feature_importance
+
+    params = {'criterion': ['gini', 'entropy'],
+              'max_depth': range(2, 5),
+              'min_samples_leaf': range(1,2)}
+
+    cv = GridSearchCV(param_grid=params, estimator=DecisionTreeClassifier(random_state=rs), cv=10)
+    cv.fit(X_train_log, y_train_log)
+
+    
+    from sklearn.feature_selection import SelectFromModel
+
+    # use the trained best decision tree from GridSearchCV to select features
+    # supply the prefit=True parameter to stop SelectFromModel to re-train the model
+    selectmodel = SelectFromModel(cv.best_estimator_, prefit=True)
+    X_train_sel_model = selectmodel.transform(X_train_log)
+    X_test_sel_model = selectmodel.transform(X_test_log)
+    
+    # Grid search cv for RFE SELECTION MODEL (BEST MODEL)
+    params = {'C': [pow(10, x) for x in range(-6, 4)]}
+
+    cv = GridSearchCV(param_grid=params, estimator=LogisticRegression(random_state=rs), cv=10, n_jobs=-1)
+    cv.fit(X_train_sel_model, y_train_log)
+    
+    print("Logistic Regression Model Statistics:")
+    print("Train accuracy:", cv.score(X_train_sel_model, y_train_log))
+    print("Test accuracy:", cv.score(X_test_sel_model, y_test_log))
+
+    # test the best model
+    y_pred = cv.predict(X_test_sel_model)
+    print("Classification Report:")
+    print(classification_report(y_test_log, y_pred))
+
+    # print parameters of the best model
+    print(cv.best_params_)
+
+
+    return cv.best_estimator_
+
+
+
+def visualise_all_models():
+    
+        
+    df = preprocess()
+    # Removes ORGYN from the dataset in order to avoid false predictor.
+    dataset = df.drop(['ORGYN'], axis=1)
+    
+    # Visualises the models
+    visualize_decision_tree(get_decision_tree(), dataset.columns, "Decision Tree Model - Task 2.png")
+    visualize_decision_tree(get_logistic_regression_model(), dataset.columns, "Logistic Regression Model - Task 3.png")
+    visualize_decision_tree(get_neural_networks_model(), dataset.columns, "Neural Network Model - Task 4.png")
